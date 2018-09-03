@@ -40,7 +40,7 @@ description: 野指針 Bug - 除錯裡的地獄級關卡
 
 ### 物件提前被釋放
 
-#### 狀況 1: 非同步的 block callback 裡，沒有使用 strongSelf
+#### 狀況 1: 非同步使用 self 的 block callback 裡，沒有使用 strongSelf
 
 這個不要跟之前提到的 block 裡使用 strong 會造成 retain cycle 的情境混淆哦！
 
@@ -58,7 +58,7 @@ __weak typeof(self) weakSelf = self;
 }
 ```
 
-首先先要釐清一個概念，這個 block 如果不是 property 或 ivar，不需使用 weak self。因為 self 並沒有強引用這個 block，使用了 weak 反而會造成潛在的風險。
+**ARC 下，為了效能 `self` 是 `__unsafe_unretained` 的**，因此 block 如果不是宣告為 property 或 ivar，不需使用 weak self。因為 self 並沒有強引用這個 block，使用了 weak 反而可能造成野指針。
 
 如上例，method 裡的 block 並沒有被 `self` 持有，但卻在外頭使用了一個弱引用，因此，在**非同步**呼叫 `doSomething()` 這個 function 時，有可能 `self`  已經被釋放，那就造成野指針問題。所以這個狀況應該改寫成：（請記得也不能只寫 `self`，`self` 是 `__unsafe_unretained` 的\)
 
